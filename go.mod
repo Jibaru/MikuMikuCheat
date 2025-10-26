@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	github.com/getlantern/systray v1.2.2
+	github.com/sashabaranov/go-openai v1.41.2
 	github.com/wailsapp/wails/v2 v2.10.2
 )
 
