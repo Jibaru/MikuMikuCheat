@@ -468,3 +468,17 @@ body {
 .box-content::-webkit-scrollbar-thumb:hover {
   background: rgba(57, 197, 187, 0.5);
 }
+
+.fade-screen {
+  opacity: 0;
+  animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
