@@ -40,7 +40,6 @@ body {
 .glass-window {
 	width: 100%;
 	height: 100%;
-	padding: 40px 32px;
 	background: linear-gradient(
 		135deg,
 		rgba(57, 197, 187, 0.08) 0%,
@@ -256,30 +255,45 @@ body {
 	width: 100%;
 	padding: 0 10px;
 }
-
 .wave-bar {
-	flex: 1;
-	min-height: 5%;
-	background: linear-gradient(
-		to top,
-		var(--miku-cyan-dark),
-		var(--miku-cyan),
-		var(--miku-cyan-light)
-	);
-	border-radius: 3px;
-	box-shadow: 0 0 12px rgba(57, 197, 187, 0.4);
-	transition: height 0.08s ease-out;
-	animation: waveGlow 2.5s ease-in-out infinite;
+  flex: 1;
+  min-height: 5%;
+  background: linear-gradient(
+    to top,
+    #a020f0,
+    #ffcc00,
+    #39c5bb
+  );
+  border-radius: 3px;
+  box-shadow:
+    0 0 12px rgba(160, 32, 240, 0.4),
+    0 0 20px rgba(255, 204, 0, 0.25),
+    0 0 25px rgba(57, 197, 187, 0.25);
+  transition: height 0.08s ease-out;
+  animation: waveGlow 3s ease-in-out infinite, waveColorShift 6s linear infinite;
 }
 
 @keyframes waveGlow {
-	0%,
-	100% {
-		opacity: 0.7;
-	}
-	50% {
-		opacity: 1;
-	}
+  0%, 100% {
+    opacity: 0.7;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.1);
+  }
+}
+
+@keyframes waveColorShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .recording-section {
@@ -359,7 +373,7 @@ body {
 .chat-view {
 	gap: 20px;
 	align-items: stretch;
-	overflow-y: scroll;
+	overflow-y: auto;
 }
 
 .message-box {
@@ -506,5 +520,77 @@ body {
 	}
 	to {
 		opacity: 1;
+	}
+}
+
+/* Enable scroll in chat view */
+.chat-view {
+	overflow-y: auto;
+	scroll-behavior: smooth;
+}
+
+/* Match scroll style of chat with rest of the theme */
+.chat-view::-webkit-scrollbar {
+	width: 8px;
+}
+
+.chat-view::-webkit-scrollbar-thumb {
+	background: rgba(57, 197, 187, 0.25);
+	border-radius: 8px;
+}
+
+.chat-view::-webkit-scrollbar-thumb:hover {
+	background: rgba(57, 197, 187, 0.5);
+}
+
+.chat-view::-webkit-scrollbar-track {
+	background: rgba(57, 197, 187, 0.05);
+	border-radius: 8px;
+}
+/* ==== Static border with moving fluid gradient ==== */
+.app-container {
+	position: relative;
+	overflow: hidden;
+	border-radius: 5px;
+}
+
+.app-container::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	padding: 3px; /* Grosor del borde */
+	border-radius: 5px;
+	background: linear-gradient(
+		130deg,
+		#a020f0,
+		#ffcc00,
+		#ff6ec7,
+		#ffcc00,
+		#a020f0
+	);
+	background-size: 300% 300%;
+	filter: brightness(1.2) saturate(1.4);
+	animation: flowingGradient 6s ease-in-out infinite;
+	-webkit-mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	pointer-events: none;
+	z-index: 5;
+	box-shadow: 0 0 20px rgba(255, 204, 0, 0.25),
+		0 0 35px rgba(160, 32, 240, 0.2);
+}
+
+/* colores se mueven suavemente */
+@keyframes flowingGradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
 	}
 }
