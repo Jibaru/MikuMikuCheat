@@ -129,24 +129,25 @@ func (a *App) SetOpacity(opacity int) {
 	}
 }
 
-// AudioData representa los datos de audio capturados
 type AudioData struct {
 	AudioBase64 string `json:"audioBase64"`
 	MimeType    string `json:"mimeType"`
 }
 
-// ProcessAudioResponse representa la respuesta del procesamiento
-type ProcessAudioResponse struct {
+type GetAIResponse struct {
+	AIResponse string `json:"aiResponse"`
+	Error      string `json:"error,omitempty"`
+}
+
+type TranscribeAudioResponse struct {
 	Transcription string `json:"transcription"`
-	AIResponse    string `json:"aiResponse"`
 	Error         string `json:"error,omitempty"`
 }
 
-// ProcessAudio procesa el audio capturado
-func (a *App) ProcessAudio(audioData AudioData) ProcessAudioResponse {
+func (a *App) TranscribeAudio(audioData AudioData) TranscribeAudioResponse {
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData.AudioBase64)
 	if err != nil {
-		return ProcessAudioResponse{
+		return TranscribeAudioResponse{
 			Error: fmt.Sprintf("Error decoding audio: %v", err),
 		}
 	}
@@ -156,38 +157,38 @@ func (a *App) ProcessAudio(audioData AudioData) ProcessAudioResponse {
 
 	err = os.WriteFile(audioPath, audioBytes, 0644)
 	if err != nil {
-		return ProcessAudioResponse{
+		return TranscribeAudioResponse{
 			Error: fmt.Sprintf("Error saving audio: %v", err),
 		}
 	}
 	defer os.Remove(audioPath)
 
-	transcription := a.transcribeAudio(audioPath)
-	aiResponse := a.getAIResponse(transcription)
-
-	return ProcessAudioResponse{
-		Transcription: transcription,
-		AIResponse:    aiResponse,
-	}
-}
-
-func (a *App) transcribeAudio(audioPath string) string {
 	ctx := context.Background()
 	transcription, err := a.aiModel.TranscribeAudio(ctx, audioPath)
 	if err != nil {
-		return fmt.Sprintf("Error transcribing audio: %v", err)
+		return TranscribeAudioResponse{
+			Error: fmt.Sprintf("Error transcribing audio: %v", err),
+		}
 	}
-	return transcription
+
+	return TranscribeAudioResponse{
+		Transcription: transcription,
+	}
+
 }
 
-func (a *App) getAIResponse(transcription string) string {
+func (a *App) GetAIResponse(transcription string) GetAIResponse {
 	ctx := context.Background()
 	prompt := fmt.Sprintf("You are a helpful coaching assistant. Your response is exact, short and concise. Provide insights based on the following user input: %s", transcription)
 	response, err := a.aiModel.GenerateResponse(ctx, prompt)
 	if err != nil {
-		return fmt.Sprintf("Error generating AI response: %v", err)
+		return GetAIResponse{
+			Error: fmt.Sprintf("Error generating AI response: %v", err),
+		}
 	}
-	return response
+	return GetAIResponse{
+		AIResponse: response,
+	}
 }
 
 // CheckAPIKeys verifica si las claves API están configuradas

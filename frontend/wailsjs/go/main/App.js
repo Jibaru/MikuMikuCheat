@@ -6,12 +6,12 @@ export function CheckAPIKeys() {
   return window['go']['main']['App']['CheckAPIKeys']();
 }
 
-export function MinimizeWindow() {
-  return window['go']['main']['App']['MinimizeWindow']();
+export function GetAIResponse(arg1) {
+  return window['go']['main']['App']['GetAIResponse'](arg1);
 }
 
-export function ProcessAudio(arg1) {
-  return window['go']['main']['App']['ProcessAudio'](arg1);
+export function MinimizeWindow() {
+  return window['go']['main']['App']['MinimizeWindow']();
 }
 
 export function Quit() {
@@ -24,4 +24,8 @@ export function RestoreWindow() {
 
 export function SetOpacity(arg1) {
   return window['go']['main']['App']['SetOpacity'](arg1);
+}
+
+export function TranscribeAudio(arg1) {
+  return window['go']['main']['App']['TranscribeAudio'](arg1);
 }

@@ -14,19 +14,31 @@ export namespace main {
 	        this.mimeType = source["mimeType"];
 	    }
 	}
-	export class ProcessAudioResponse {
-	    transcription: string;
+	export class GetAIResponse {
 	    aiResponse: string;
 	    error?: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new ProcessAudioResponse(source);
+	        return new GetAIResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.aiResponse = source["aiResponse"];
+	        this.error = source["error"];
+	    }
+	}
+	export class TranscribeAudioResponse {
+	    transcription: string;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TranscribeAudioResponse(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.transcription = source["transcription"];
-	        this.aiResponse = source["aiResponse"];
 	        this.error = source["error"];
 	    }
 	}

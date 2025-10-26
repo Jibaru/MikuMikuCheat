@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Audio → Transcription → Response Stream</title>
+<style>
+  body {
+    background: #111;
+    color: #0ff;
+    font-family: monospace;
+    padding: 20px;
+  }
+  pre {
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+<h2>🎧 Live Transcription & Response Demo</h2>
+<p>Press <b>X</b> to start recording desktop audio.<br>
+Press <b>Y</b> to stop and get AI response.</p>
+
+<h3>🗣️ Transcription:</h3>
+<pre id="transcription"></pre>
+
+<h3>💬 AI Response:</h3>
+<pre id="response"></pre>
+
+<script type="module">
+const OPENAI_API_KEY = "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";
+
+let mediaRecorder;
+let ws;
+let chunks = [];
+let fullTranscription = "";
+
+// --- Helper to update UI
+function appendText(el, text) {
+  el.textContent += text;
+  el.scrollTop = el.scrollHeight;
+}
+
+// --- Handle keys X/Y
+document.addEventListener("keydown", async (e) => {
+  if (e.key.toLowerCase() === "x") startRecording();
+  if (e.key.toLowerCase() === "y") stopRecordingAndAsk();
+});
+
+// --- Start capturing desktop audio
+async function startRecording() {
+  const transcriptionEl = document.getElementById("transcription");
+  transcriptionEl.textContent = "";
+  fullTranscription = "";
+
+  const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: false });
+  if (!stream.getAudioTracks().length) {
+    alert("No desktop audio detected!");
+    return;
+  }
+
+  // Connect to OpenAI Realtime API
+  ws = new WebSocket(`wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview`, {
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY}` } // Only in Node; in browser, we'll send auth after open
+  });
+
+  ws.onopen = () => {
+    console.log("🔊 Connected to Realtime API");
+    ws.send(JSON.stringify({ type: "session.update", session: { modalities: ["text", "audio"], instructions: "Transcribe live audio." } }));
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+        const buffer = await event.data.arrayBuffer();
+        ws.send(buffer); // Send audio chunks
+      }
+    };
+    mediaRecorder.start(300);
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === "transcript.delta" && data.delta?.text) {
+        appendText(transcriptionEl, data.delta.text);
+        fullTranscription += data.delta.text;
+      }
+    } catch {}
+  };
+
+  ws.onerror = (err) => console.error("WebSocket error:", err);
+  ws.onclose = () => console.log("🛑 Transcription stopped.");
+}
+
+// --- Stop recording and get AI response
+async function stopRecordingAndAsk() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  if (ws) ws.close();
+
+  const responseEl = document.getElementById("response");
+  responseEl.textContent = "Thinking...\n";
+
+  // Now stream the response text from OpenAI
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: fullTranscription }],
+      stream: true,
+    }),
+  });
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+
+    const lines = chunk.split("\n").filter(line => line.trim());
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const data = line.replace("data: ", "");
+        if (data === "[DONE]") return;
+        try {
+          const json = JSON.parse(data);
+          const token = json.choices?.[0]?.delta?.content;
+          if (token) appendText(responseEl, token);
+        } catch {}
+      }
+    }
+  }
+}
+</script>
+</body>
+</html>

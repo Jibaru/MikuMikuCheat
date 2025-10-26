@@ -4,12 +4,14 @@ import {main} from '../models';
 
 export function CheckAPIKeys():Promise<Record<string, boolean>>;
 
-export function MinimizeWindow():Promise<void>;
+export function GetAIResponse(arg1:string):Promise<main.GetAIResponse>;
 
-export function ProcessAudio(arg1:main.AudioData):Promise<main.ProcessAudioResponse>;
+export function MinimizeWindow():Promise<void>;
 
 export function Quit():Promise<void>;
 
 export function RestoreWindow():Promise<void>;
 
 export function SetOpacity(arg1:number):Promise<void>;
+
+export function TranscribeAudio(arg1:main.AudioData):Promise<main.TranscribeAudioResponse>;
