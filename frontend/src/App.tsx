@@ -60,7 +60,7 @@ function App() {
     setViewMode('recording');
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ audio: true });
       streamRef.current = stream;
       startRecording();
     } catch (err) {
@@ -74,11 +74,8 @@ function App() {
   if (!streamRef.current) return;
 
   audioChunksRef.current = [];
-  const mimeType = MediaRecorder.isTypeSupported('audio/webm')
-    ? 'audio/webm'
-    : 'audio/ogg';
   
-  const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType });
+  const mediaRecorder = new MediaRecorder(streamRef.current);
   mediaRecorderRef.current = mediaRecorder;
 
   mediaRecorder.ondataavailable = (event) => {

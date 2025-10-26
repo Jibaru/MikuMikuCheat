@@ -3,9 +3,11 @@ package main
 import (
 	"39coach/internal/models"
 	"embed"
+	"log"
 	"os"
 
 	"github.com/getlantern/systray"
+	"github.com/joho/godotenv"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -20,6 +22,10 @@ var assets embed.FS
 var icon []byte
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	aiModel := models.NewOpenAIModel(os.Getenv("OPENAI_API_KEY"))
 
 	app := NewApp(aiModel)
@@ -64,6 +70,6 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatal("Error starting app:", err)
 	}
 }
