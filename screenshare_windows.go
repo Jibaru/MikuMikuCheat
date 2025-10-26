@@ -58,7 +58,7 @@ func setWindowsDisplayAffinity(ctx context.Context) {
 		var hwnd uintptr
 
 		for i := 0; i < 20; i++ {
-			hwnd = findWailsWindow("39coach")
+			hwnd = findWailsWindow("MikuMikuCheat")
 
 			if hwnd != 0 {
 				visible, _, _ := procIsWindowVisible.Call(hwnd)
@@ -95,7 +95,7 @@ func hideFromTaskbarWails(ctx context.Context) {
 	go func() {
 		time.Sleep(500 * time.Millisecond)
 
-		hwnd := findWailsWindow("39coach")
+		hwnd := findWailsWindow("MikuMikuCheat")
 		if hwnd != 0 {
 			err := hideFromTaskbar(hwnd)
 			if err != nil {
@@ -112,7 +112,7 @@ func setAlwaysOnTopWails(ctx context.Context) {
 	go func() {
 		time.Sleep(600 * time.Millisecond)
 
-		hwnd := findWailsWindow("39coach")
+		hwnd := findWailsWindow("MikuMikuCheat")
 		if hwnd != 0 {
 			err := setAlwaysOnTop(hwnd, true)
 			if err != nil {
@@ -129,7 +129,7 @@ func setWindowOpacityWails(ctx context.Context, alpha uint8) {
 	go func() {
 		time.Sleep(700 * time.Millisecond)
 
-		hwnd := findWailsWindow("39coach")
+		hwnd := findWailsWindow("MikuMikuCheat")
 		if hwnd != 0 {
 			err := setWindowOpacity(hwnd, alpha)
 			if err != nil {

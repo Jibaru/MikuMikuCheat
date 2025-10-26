@@ -59,8 +59,8 @@ func (a *App) shutdown(ctx context.Context) {
 // onSystrayReady is called when systray is ready
 func (a *App) onSystrayReady() {
 	systray.SetIcon(icon)
-	systray.SetTitle("39coach")
-	systray.SetTooltip("39coach - Coaching Application")
+	systray.SetTitle("MikuMikuCheat")
+	systray.SetTooltip("MikuMikuCheat")
 
 	a.mShow = systray.AddMenuItem("Mostrar", "Mostrar ventana")
 	a.mHide = systray.AddMenuItem("Ocultar", "Ocultar ventana")

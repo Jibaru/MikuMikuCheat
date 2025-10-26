@@ -1,4 +1,4 @@
-module 39coach
+module MikuMikuCheat
 
 go 1.23
 

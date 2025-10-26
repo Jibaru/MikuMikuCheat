@@ -1,7 +1,7 @@
 package main
 
 import (
-	"39coach/internal/models"
+	"MikuMikuCheat/internal/models"
 	"embed"
 	"log"
 	"os"
@@ -36,7 +36,7 @@ func main() {
 	}()
 
 	err := wails.Run(&options.App{
-		Title:  "39coach",
+		Title:  "MikuMikuCheat",
 		Width:  500,
 		Height: 600,
 		AssetServer: &assetserver.Options{
