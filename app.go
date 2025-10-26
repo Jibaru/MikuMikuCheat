@@ -36,13 +36,13 @@ func (a *App) startup(ctx context.Context) {
 
 	// Set window protection based on OS
 	if runtime.GOOS == "windows" {
-		setWindowsDisplayAffinity(ctx)
+		setWindowsDisplayAffinity()
 		// Hide from taskbar initially
-		hideFromTaskbarWails(ctx)
+		hideFromTaskbarWails()
 		// Set always on top
-		setAlwaysOnTopWails(ctx)
+		setAlwaysOnTopWails()
 		// Set window transparency/opacity
-		setWindowOpacityWails(ctx, 230)
+		setWindowOpacityWails(230)
 	}
 }
 
@@ -77,7 +77,7 @@ func (a *App) onSystrayReady() {
 					wailsruntime.WindowShow(a.ctx)
 					// Re-enable always on top when showing
 					if runtime.GOOS == "windows" {
-						setAlwaysOnTopWails(a.ctx)
+						setAlwaysOnTopWails()
 					}
 				}
 			case <-a.mHide.ClickedCh:
@@ -115,7 +115,7 @@ func (a *App) RestoreWindow() {
 		a.isMinimized = false
 		wailsruntime.WindowShow(a.ctx)
 		if runtime.GOOS == "windows" {
-			setAlwaysOnTopWails(a.ctx)
+			setAlwaysOnTopWails()
 		}
 	}
 }
@@ -125,7 +125,7 @@ func (a *App) SetOpacity(opacity int) {
 	if a.ctx != nil && runtime.GOOS == "windows" {
 		// Convert 0-100 to 0-255
 		alpha := uint8((opacity * 255) / 100)
-		setWindowOpacityWails(a.ctx, alpha)
+		setWindowOpacityWails(alpha)
 	}
 }
 
