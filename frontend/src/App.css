@@ -225,6 +225,14 @@ body {
   justify-content: center;
 }
 
+.mini-waveform-container {
+  width: 38%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .audio-waveform {
   display: flex;
   align-items: center;
@@ -333,8 +341,9 @@ body {
 .message-box {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 5px;
   width: 100%;
+  margin-top: 5px;
 }
 
 .box-label {
@@ -415,10 +424,9 @@ body {
 /* Bottom section in chat view */
 .bottom-section {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  margin-top: 8px;
 }
 
 .miku-icon-chat {

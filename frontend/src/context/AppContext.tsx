@@ -15,7 +15,6 @@ interface AppContextProps {
   messages: Message[];
   audioLevel: number;
   startRecording: () => Promise<void>;
-  stopRecording: () => void;
   processAudio: () => Promise<void>;
   addMessage: (msg: Message) => void;
 }
@@ -32,10 +31,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const lastProcessedIndex = useRef(0); // 👈 nuevo: marcador de procesamiento
   const animationFrameRef = useRef<number>();
 
-  // 🎙 Start recording mode
+  // 🎙 Start recording (solo una vez)
   const startRecording = async () => {
+    if (isRecording) return;
     if (!streamRef.current) {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         audio: true,
@@ -54,7 +55,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     mediaRecorder.start(100);
     setIsRecording(true);
 
-    // Setup visualization
+    // 🎚 Nivel de audio
     const audioContext = new AudioContext();
     const analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(streamRef.current);
@@ -69,29 +70,44 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       animationFrameRef.current = requestAnimationFrame(updateLevel);
     };
     updateLevel();
+
+    console.log("🎙 Grabación iniciada permanentemente.");
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.requestData();
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (animationFrameRef.current)
-        cancelAnimationFrame(animationFrameRef.current);
-    }
-  };
-
-  // 🧠 Process recorded audio
+  // 🧠 Process only new audio since last time
   const processAudio = async () => {
-    if (!audioChunksRef.current.length) return;
+    if (!mediaRecorderRef.current || !streamRef.current) return;
 
-    stopRecording();
-    setIsProcessing(true);
     setViewMode("chat");
 
-    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-    const reader = new FileReader();
+    // Detiene temporalmente el recorder actual
+    const recorder = mediaRecorderRef.current;
+    recorder.stop();
 
+    // Espera a que termine de escribir los últimos chunks
+    await new Promise((resolve) => {
+      recorder.onstop = resolve;
+    });
+
+    // 🔹 Crea un blob completo (válido)
+    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+
+    // Reinicia los chunks para la próxima grabación
+    audioChunksRef.current = [];
+    lastProcessedIndex.current = 0;
+
+    // 🔹 Reinicia la grabación inmediatamente
+    const newRecorder = new MediaRecorder(streamRef.current);
+    mediaRecorderRef.current = newRecorder;
+    newRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+    newRecorder.start(100);
+
+    setIsProcessing(true);
+
+    // 🔹 Procesa el audio recién grabado
+    const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = (reader.result as string).split(",")[1];
       try {
@@ -105,6 +121,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           ...prev,
           { sender: "user", text: res.transcription },
         ]);
+
         const aiRes = await GetAIResponse(res.transcription);
         if (aiRes.error) throw new Error(aiRes.error);
 
@@ -117,7 +134,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         alert("Error processing audio: " + e.message);
       } finally {
         setIsProcessing(false);
-        if (viewMode === "chat") startRecording();
       }
     };
 
@@ -133,6 +149,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         streamRef.current.getTracks().forEach((t) => t.stop());
       if (animationFrameRef.current)
         cancelAnimationFrame(animationFrameRef.current);
+      if (mediaRecorderRef.current?.state === "recording")
+        mediaRecorderRef.current.stop();
     };
   }, []);
 
@@ -146,7 +164,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         messages,
         audioLevel,
         startRecording,
-        stopRecording,
         processAudio,
         addMessage,
       }}
