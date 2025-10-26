@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
 				</div>
 
 				<button className="solve-button" onClick={processAudio}>
-					<span>[⌘ + enter] solve answer</span>
+					<span>[⌘ + enter] MikuMikuCheat</span>
 				</button>
 			</div>
 		</div>

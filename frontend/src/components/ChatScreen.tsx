@@ -44,9 +44,7 @@ export default function ChatScreen() {
 		<div className="app-container">
 			<div className="glass-window-chat chat-view">
 				<div className="messages-container">
-					{messages.length === 0 ? (
-						<div className="empty-chat">No messages yet</div>
-					) : (
+					{messages.length !== 0 && (
 						messages.map((m, i) => (
 							<div
 								key={i}
@@ -92,7 +90,7 @@ export default function ChatScreen() {
 							onClick={isRecording ? processAudio : startRecording}
 						>
 							<span>
-								[⌘ + enter] {isRecording ? "process message" : "resume listening"}
+								[⌘ + enter] {isRecording ? "cheat" : "resume listening"}
 							</span>
 						</button>
 					</div>

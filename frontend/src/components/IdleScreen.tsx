@@ -28,8 +28,8 @@ export default function IdleScreen() {
 				<div className="miku-circle" onClick={handleStart}>
 					<img className="miku-img" src={sleepImg} />
 				</div>
-				<button className="start-button">
-					<span>[⌘ + enter] start</span>
+				<button className="start-button" onClick={handleStart}>
+					<span>[⌘ + enter] Cheat</span>
 				</button>
 			</div>
 		</div>
