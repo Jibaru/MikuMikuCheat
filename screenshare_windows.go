@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"syscall"
 	"time"
@@ -52,8 +51,11 @@ var (
 	procSetLayeredWindowAttributes = user32.NewProc("SetLayeredWindowAttributes")
 )
 
-// setWindowsDisplayAffinity sets the window to be excluded from screen capture
-func setWindowsDisplayAffinity(ctx context.Context) {
+// Helper functions for manipulating window visibility, style, and affinity
+
+// setWindowsDisplayAffinity tries to find the target window and sets its
+// display affinity to exclude it from screen capture.
+func setWindowsDisplayAffinity() {
 	go func() {
 		var hwnd uintptr
 
@@ -90,8 +92,8 @@ func setWindowsDisplayAffinity(ctx context.Context) {
 	}()
 }
 
-// hideFromTaskbarWails hides the window from taskbar
-func hideFromTaskbarWails(ctx context.Context) {
+// hideFromTaskbarWails hides the target window from the Windows taskbar.
+func hideFromTaskbarWails() {
 	go func() {
 		time.Sleep(500 * time.Millisecond)
 
@@ -107,8 +109,8 @@ func hideFromTaskbarWails(ctx context.Context) {
 	}()
 }
 
-// setAlwaysOnTopWails sets the window to always be on top
-func setAlwaysOnTopWails(ctx context.Context) {
+// setAlwaysOnTopWails sets the target window to always stay on top of others.
+func setAlwaysOnTopWails() {
 	go func() {
 		time.Sleep(600 * time.Millisecond)
 
@@ -118,14 +120,14 @@ func setAlwaysOnTopWails(ctx context.Context) {
 			if err != nil {
 				fmt.Printf("Error setting always on top: %v\n", err)
 			} else {
-				fmt.Println("✓ Successfully set always on top")
+				fmt.Println("Successfully set always on top")
 			}
 		}
 	}()
 }
 
-// setWindowOpacityWails sets the window opacity
-func setWindowOpacityWails(ctx context.Context, alpha uint8) {
+// setWindowOpacityWails sets the target window’s opacity to the specified alpha value.
+func setWindowOpacityWails(alpha uint8) {
 	go func() {
 		time.Sleep(700 * time.Millisecond)
 
@@ -141,6 +143,7 @@ func setWindowOpacityWails(ctx context.Context, alpha uint8) {
 	}()
 }
 
+// setDisplayAffinity sets the display affinity for a given window handle.
 func setDisplayAffinity(hwnd uintptr, affinity uint32) error {
 	ret, _, err := procSetWindowDisplayAffinity.Call(
 		hwnd,
@@ -154,6 +157,7 @@ func setDisplayAffinity(hwnd uintptr, affinity uint32) error {
 	return nil
 }
 
+// hideFromTaskbar removes the window from the taskbar by modifying its extended style.
 func hideFromTaskbar(hwnd uintptr) error {
 	const GWL_EXSTYLE = -20
 
@@ -167,7 +171,7 @@ func hideFromTaskbar(hwnd uintptr) error {
 	return nil
 }
 
-// setAlwaysOnTop sets or removes the always on top property
+// setAlwaysOnTop enables or disables the “always on top” flag for a window.
 func setAlwaysOnTop(hwnd uintptr, alwaysOnTop bool) error {
 	var flag uintptr
 	if alwaysOnTop {
@@ -189,25 +193,22 @@ func setAlwaysOnTop(hwnd uintptr, alwaysOnTop bool) error {
 	return nil
 }
 
-// setWindowOpacity sets the window opacity (0-255, where 255 is fully opaque)
+// setWindowOpacity applies a transparency level to the specified window.
 func setWindowOpacity(hwnd uintptr, alpha uint8) error {
 	const GWL_EXSTYLE = -20
 
-	// Get current extended window style
 	exStyle := getWindowLongPtr(hwnd, GWL_EXSTYLE)
 
-	// Add WS_EX_LAYERED style if not present
 	if (exStyle & WS_EX_LAYERED) == 0 {
 		newStyle := exStyle | WS_EX_LAYERED
 		setWindowLongPtr(hwnd, GWL_EXSTYLE, newStyle)
 	}
 
-	// Set the layered window attributes
 	ret, _, err := procSetLayeredWindowAttributes.Call(
 		hwnd,
-		0,              // crKey (color key, not used)
-		uintptr(alpha), // bAlpha (0-255)
-		LWA_ALPHA,      // dwFlags
+		0,              // Color key (not used)
+		uintptr(alpha), // Alpha transparency (0–255)
+		LWA_ALPHA,
 	)
 
 	if ret == 0 {
@@ -216,6 +217,7 @@ func setWindowOpacity(hwnd uintptr, alpha uint8) error {
 	return nil
 }
 
+// getWindowLongPtr retrieves information about the specified window.
 func getWindowLongPtr(hwnd uintptr, index int) uintptr {
 	ret, _, _ := procGetWindowLongPtrW.Call(
 		hwnd,
@@ -224,6 +226,7 @@ func getWindowLongPtr(hwnd uintptr, index int) uintptr {
 	return ret
 }
 
+// setWindowLongPtr modifies an attribute of the specified window.
 func setWindowLongPtr(hwnd uintptr, index int, newLong uintptr) uintptr {
 	ret, _, _ := procSetWindowLongPtrW.Call(
 		hwnd,
@@ -233,6 +236,7 @@ func setWindowLongPtr(hwnd uintptr, index int, newLong uintptr) uintptr {
 	return ret
 }
 
+// findWailsWindow locates a window by its title and returns its handle.
 func findWailsWindow(title string) uintptr {
 	titlePtr, _ := syscall.UTF16PtrFromString(title)
 	hwnd, _, _ := procFindWindowW.Call(
