@@ -1,231 +1,314 @@
 import { useState, useRef, useEffect } from 'react';
-import OpenAI from 'openai';
+import { ProcessAudio, Quit } from '../wailsjs/go/main/App';
+import './App.css';
+import sleepImg from "./assets/images/sleep.png";
+import listenImg from "./assets/images/listen.png";
 
-// Types
-interface NavigationProps {
-  currentView: 'chat' | 'voice';
-  onNavigate: (view: 'chat' | 'voice') => void;
+type ViewMode = 'idle' | 'recording' | 'chat';
+
+interface ProcessingState {
+  transcription: string;
+  aiResponse: string;
+  isProcessing: boolean;
 }
 
-interface ChatMessageProps {
-  message: string;
-  isUser: boolean;
-}
+function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>('idle');
+  const [isRecording, setIsRecording] = useState(false);
+  const [processing, setProcessing] = useState<ProcessingState>({
+    transcription: '',
+    aiResponse: '',
+    isProcessing: false
+  });
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [audioLevel, setAudioLevel] = useState<number>(0);
+  const animationFrameRef = useRef<number>();
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
-
-type ViewType = 'chat' | 'voice';
-
-// Initialize OpenAI client
-// IMPORTANT: In production, use environment variables or secure configuration
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-  dangerouslyAllowBrowser: true, // Only for development/desktop apps
-});
-
-// Navigation Component
-function Navigation({ currentView, onNavigate }: NavigationProps) {
-  return (
-    <nav className="navigation">
-      <button
-        className={`nav-btn ${currentView === 'chat' ? 'active' : ''}`}
-        onClick={() => onNavigate('chat')}
-      >
-        💬 OpenAI Chat
-      </button>
-      <button
-        className={`nav-btn ${currentView === 'voice' ? 'active' : ''}`}
-        onClick={() => onNavigate('voice')}
-      >
-        🎤 Voice Assistant
-      </button>
-    </nav>
-  );
-}
-
-// Chat Message Component
-function ChatMessage({ message, isUser }: ChatMessageProps) {
-  return (
-    <div className={`message ${isUser ? 'user-message' : 'ai-message'}`}>
-      <div className="message-content">
-        {message}
-      </div>
-    </div>
-  );
-}
-
-// OpenAI Chat View Component
-function ChatView() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const handleKeyPress = async (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Escape') {
+        e.preventDefault();
+        await Quit();
+        return;
+      }
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        
+        if (viewMode === 'idle') {
+          await startRecordingMode();
+        } else if (viewMode === 'recording' && isRecording) {
+          await processAudio();
+        }
+      }
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [viewMode, isRecording]);
 
+  const handleMikuClick = async () => {
+    if (viewMode === 'idle') {
+      await startRecordingMode();
+    }
+  };
+
+  const startRecordingMode = async () => {
+    setViewMode('recording');
+    
     try {
-      // Prepare messages for OpenAI API
-      const apiMessages = [...messages, userMessage].map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      // Call OpenAI API directly from client
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: apiMessages,
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
-
-      const responseContent = completion.choices[0]?.message?.content || 'No response';
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: responseContent,
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Error calling OpenAI:', error);
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Sorry, there was an error processing your request. Please check your API key and internet connection.',
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      startRecording();
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      alert('Can not access microphone. Please try again.');
+      setViewMode('idle');
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
+  const startRecording = () => {
+  if (!streamRef.current) return;
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  audioChunksRef.current = [];
+  const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+    ? 'audio/webm'
+    : 'audio/ogg';
+  
+  const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType });
+  mediaRecorderRef.current = mediaRecorder;
+
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) {
+      console.log("Chunk size:", event.data.size);
+      audioChunksRef.current.push(event.data);
     }
   };
 
-  return (
-    <div className="chat-view">
-      <div className="chat-header">
-        <h2>💬 OpenAI Chat Assistant</h2>
-      </div>
+  mediaRecorder.start(100); // force dataavailable each 100 ms
+  setIsRecording(true);
+
+  try {
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    const microphone = audioContext.createMediaStreamSource(streamRef.current);
+    microphone.connect(analyser);
+    analyser.fftSize = 256;
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    const updateLevel = () => {
+      analyser.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      setAudioLevel(average / 255);
+      animationFrameRef.current = requestAnimationFrame(updateLevel);
+    };
+
+    updateLevel();
+  } catch (err) {
+    console.error('Error setting up audio visualization:', err);
+  }
+};
+
+const stopRecording = () => {
+  if (mediaRecorderRef.current && isRecording) {
+    mediaRecorderRef.current.requestData(); // force last chunk
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }
+};
+
+
+  const processAudio = async () => {
+    if (!audioChunksRef.current.length) {
+      alert('There is no audio recorded.');
+      return;
+    }
+
+    stopRecording();
+    setViewMode('chat');
+    setProcessing({ transcription: '', aiResponse: '', isProcessing: true });
+
+    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+    
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Audio = (reader.result as string).split(',')[1];
       
-      <div className="chat-messages">
-        {messages.length === 0 && (
-          <div className="message ai-message">
-            <div className="message-content">
-              Hello! How can I help you today?
+      try {
+        const response = await ProcessAudio({
+          audioBase64: base64Audio,
+          mimeType: audioBlob.type
+        });
+
+        if (response.error) {
+          console.error('Error:', response.error);
+          setProcessing({
+            transcription: 'Error processing audio',
+            aiResponse: response.error,
+            isProcessing: false
+          });
+          return;
+        }
+
+        setProcessing({
+          transcription: response.transcription,
+          aiResponse: response.aiResponse,
+          isProcessing: false
+        });
+      } catch (err) {
+        console.error('Error processing audio:', err);
+        setProcessing({
+          transcription: 'Error',
+          aiResponse: 'Error processing audio: ' + String(err),
+          isProcessing: false
+        });
+      }
+    };
+
+    reader.readAsDataURL(audioBlob);
+  };
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Render by mode
+  if (viewMode === 'idle') {
+    return (
+      <div className="app-container">
+        <div className="glass-window idle-view">
+          <div className="miku-circle" onClick={handleMikuClick}>
+            <img className="miku-img" src={sleepImg}/>
+          </div>
+          
+          <button className="start-button">
+            <span>ctrl + enter Start</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (viewMode === 'recording') {
+    return (
+      <div className="app-container">
+        <div className="glass-window recording-view">
+          {/* Waveform */}
+          <div className="waveform-container">
+            <AudioWaveform isRecording={isRecording} level={audioLevel} />
+          </div>
+
+          {/* Miku Icon + Listening */}
+          <div className="recording-section">
+            <div className="miku-circle" onClick={handleMikuClick}>
+              <img className="miku-img" src={listenImg}/>
             </div>
           </div>
-        )}
-        {messages.map((msg) => (
-          <ChatMessage 
-            key={msg.id} 
-            message={msg.content} 
-            isUser={msg.role === 'user'} 
-          />
-        ))}
-        {isLoading && (
-          <div className="message ai-message">
-            <div className="message-content typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      <div className="chat-input-container">
-        <input
-          type="text"
-          className="chat-input"
-          placeholder="Type your message..."
-          value={input}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          disabled={isLoading}
-        />
-        <button 
-          onClick={handleSendMessage}
-          className="send-btn" 
-          disabled={!input.trim() || isLoading}
-        >
-          {isLoading ? 'Sending...' : 'Send'}
-        </button>
+          {/* Solve Button */}
+          <button className="solve-button">
+            <span>ctrl + enter Solve answer</span>
+          </button>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-// Voice Assistant View Component (Placeholder)
-function VoiceView() {
+  // Chat view
   return (
-    <div className="voice-view">
-      <div className="voice-container">
-        <h2>🎤 Voice Assistant</h2>
-        <p className="coming-soon">Coming Soon</p>
-        <div className="voice-placeholder">
-          <div className="microphone-icon">🎙️</div>
-          <p>Voice assistant functionality will be implemented here</p>
+    <div className="app-container">
+      <div className="glass-window-chat chat-view">
+        {/* Transcription */}
+        <div className="message-box transcription-box">
+          <div className="box-label">Transcribed part</div>
+          <div className="box-content">
+            {processing.isProcessing ? (
+              <div className="loading">Transcribing...</div>
+            ) : (
+              processing.transcription
+            )}
+          </div>
+        </div>
+
+        {/* AI Response */}
+        <div className="message-box response-box">
+          <div className="box-label">AI Response:</div>
+          <div className="box-content">
+            {processing.isProcessing ? (
+              <div className="loading">
+                <div className="loading-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span>It is something similar to...</span>
+              </div>
+            ) : (
+              processing.aiResponse
+            )}
+          </div>
+        </div>
+
+        {/* Bottom section with Miku + Listening */}
+        <div className="bottom-section">
+          <div className="miku-circle" style={{width: '50px',height: '50px'}} onClick={handleMikuClick}>
+            <img className="miku-img" style={{width: '100px',height: '100px'}} src={listenImg}/>
+          </div>
+          <span className="listening-text">Listening ...</span>
         </div>
       </div>
     </div>
   );
 }
 
-// Main App Component
-function App() {
-  const [currentView, setCurrentView] = useState<ViewType>('chat');
+function AudioWaveform({ isRecording, level }: { isRecording: boolean; level: number }) {
+  const [time, setTime] = useState(0);
 
-  const handleNavigate = (view: ViewType): void => {
-    setCurrentView(view);
-  };
+  useEffect(() => {
+    if (!isRecording) return;
+    
+    const interval = setInterval(() => {
+      setTime(t => t + 0.1);
+    }, 50);
 
-  return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>🤖 AI Assistant</h1>
-      </header>
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
-      <Navigation currentView={currentView} onNavigate={handleNavigate} />
+  const bars = Array.from({ length: 60 }, (_, i) => {
+    const baseHeight = 5;
+    const maxHeight = isRecording ? 90 : 10;
+    const height = isRecording 
+      ? baseHeight + Math.abs(Math.sin(time + i * 0.25)) * maxHeight * (0.5 + level * 0.5)
+      : baseHeight;
+    
+    return (
+      <div 
+        key={i} 
+        className="wave-bar" 
+        style={{ 
+          height: `${height}%`,
+          opacity: isRecording ? 1 : 0.3
+        }}
+      />
+    );
+  });
 
-      <main className="app-main">
-        {currentView === 'chat' && <ChatView />}
-        {currentView === 'voice' && <VoiceView />}
-      </main>
-    </div>
-  );
+  return <div className="audio-waveform">{bars}</div>;
 }
 
 export default App;
