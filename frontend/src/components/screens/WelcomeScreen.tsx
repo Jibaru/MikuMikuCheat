@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { useApp } from "../context/AppContext";
-import AudioWaveform from "./AudioWaveForm";
-import listenImg from "../assets/images/miku_cheat.png";
-import MangaLines from "./MangaLines";
-import PictureBackground from "./PictureBackground";
-import LightsBackground from "./LightsBackground";
+import { useApp } from "../../context/AppContext";
+import AudioWaveform from "../ui/AudioWaveForm";
+import listenImg from "../../assets/images/miku_cheat.png";
+import MangaLines from "../ui/MangaLines";
+import PictureBackground from "../ui/PictureBackground";
+import LightsBackground from "../ui/LightsBackground";
 
 export default function WelcomeScreen() {
 	const { isRecording, audioLevel, processAudio } = useApp();

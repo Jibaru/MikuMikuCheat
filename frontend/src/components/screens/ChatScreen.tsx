@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { useApp } from "../context/AppContext";
-import AudioWaveform from "./AudioWaveForm";
-import thinkImg from "../assets/images/miku_think.png";
+import { useApp } from "../../context/AppContext";
+import AudioWaveform from "../ui/AudioWaveForm";
+import thinkImg from "../../assets/images/miku_think.png";
 
 export default function ChatScreen() {
 	const {

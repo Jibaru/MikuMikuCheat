@@ -1,7 +1,7 @@
 import { useApp, AppProvider } from "./context/AppContext";
-import IdleScreen from "./components/IdleScreen";
-import WelcomeScreen from "./components/WelcomeScreen";
-import ChatScreen from "./components/ChatScreen";
+import IdleScreen from "./components/screens/IdleScreen";
+import WelcomeScreen from "./components/screens/WelcomeScreen";
+import ChatScreen from "./components/screens/ChatScreen";
 import "./App.css";
 
 function MainApp() {

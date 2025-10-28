@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { useApp } from "../context/AppContext";
-import sleepImg from "../assets/images/miku_sleep.png";
-import PictureBackground from "./PictureBackground";
+import { useApp } from "../../context/AppContext";
+import sleepImg from "../../assets/images/miku_sleep.png";
+import PictureBackground from "../ui/PictureBackground";
 
 export default function IdleScreen() {
 	const { setViewMode, startRecording } = useApp();
