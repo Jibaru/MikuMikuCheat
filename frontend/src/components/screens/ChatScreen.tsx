@@ -63,18 +63,31 @@ export default function ChatScreen() {
 				</div>
 
 				{isProcessing && (
-					<div className="loading">
-						<div className="miku-circle" style={{ width: "50px", height: "50px" }}>
+					<div className="flex justify-center">
+						<div className="relative w-[70px] h-[70px] rounded-full overflow-hidden flex items-center justify-center">
+							{/* Glowing animated gradient border */}
+							<div className="absolute inset-0 rounded-full p-[3px]">
+								<div className="w-full h-full rounded-full relative">
+									<div className="absolute inset-0 rounded-full bg-[linear-gradient(130deg,#a020f0,#38d8e3,#dbabc9,#05a0ed,#a020f0)] bg-[length:300%_300%] animate-[flowingGradient_6s_ease-in-out_infinite] brightness-125 saturate-150 blur-[0.5px]"></div>
+									<div className="absolute inset-[3px] rounded-full"></div>
+								</div>
+							</div>
+
+							{/* Inner image */}
 							<img
-								className="miku-img"
 								src={thinkImg}
-								style={{ width: "100px", height: "100px" }}
+								alt="thinking"
+								className="h-[150px] object-cover absolute top-[-10px] animate-[shake_0.3s_ease-in-out_infinite]"
 							/>
-						</div>
-						<div className="loading-dots">
-							<span></span>
-							<span></span>
-							<span></span>
+
+							{/* Custom animation keyframes */}
+							<style>{`
+                @keyframes flowingGradient {
+                  0% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                  100% { background-position: 0% 50%; }
+                }
+              `}</style>
 						</div>
 					</div>
 				)}

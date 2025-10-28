@@ -7,8 +7,8 @@ export default function IdleScreen() {
 	const { setViewMode, startRecording } = useApp();
 
 	const handleStart = async () => {
-		setViewMode("recording");
 		await startRecording();
+		setViewMode("recording");
 	};
 
 	useEffect(() => {
