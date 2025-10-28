@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useApp } from "../context/AppContext";
 import AudioWaveform from "./AudioWaveForm";
-import thinkImg from "../assets/images/think.png";
+import thinkImg from "../assets/images/miku_think.png";
 
 export default function ChatScreen() {
 	const {
@@ -44,7 +44,7 @@ export default function ChatScreen() {
 		<div className="app-container">
 			<div className="glass-window-chat chat-view">
 				<div className="messages-container">
-					{messages.length !== 0 && (
+					{messages.length !== 0 &&
 						messages.map((m, i) => (
 							<div
 								key={i}
@@ -57,8 +57,7 @@ export default function ChatScreen() {
 								</div>
 								<div className="box-content">{m.text}</div>
 							</div>
-						))
-					)}
+						))}
 					{/* Invisible div to auto-scroll into view */}
 					<div ref={messagesEndRef} />
 				</div>
@@ -86,12 +85,10 @@ export default function ChatScreen() {
 							<AudioWaveform isRecording={isRecording} level={audioLevel} />
 						</div>
 						<button
-							className="solve-button"
+							className="primary-button"
 							onClick={isRecording ? processAudio : startRecording}
 						>
-							<span>
-								[⌘ + enter] {isRecording ? "cheat" : "resume listening"}
-							</span>
+							<span>[⌘ + enter] {isRecording ? "cheat" : "resume listening"}</span>
 						</button>
 					</div>
 				)}

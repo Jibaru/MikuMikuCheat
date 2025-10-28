@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useApp } from "../context/AppContext";
-import sleepImg from "../assets/images/sleep.png";
+import sleepImg from "../assets/images/miku_sleep.png";
+import PictureBackground from "./PictureBackground";
 
 export default function IdleScreen() {
 	const { setViewMode, startRecording } = useApp();
@@ -24,11 +25,12 @@ export default function IdleScreen() {
 
 	return (
 		<div className="app-container">
-			<div className="glass-window idle-view">
-				<div className="miku-circle" onClick={handleStart}>
-					<img className="miku-img" src={sleepImg} />
-				</div>
-				<button className="start-button" onClick={handleStart}>
+			<PictureBackground
+				imageUrl={sleepImg}
+				className="absolute w-full h-full bg-[#1a1a2e] overflow-hidden"
+			/>
+			<div className="w-full h-full flex flex-col justify-end items-center relative z-10">
+				<button className="primary-button" onClick={handleStart}>
 					<span>[⌘ + enter] Cheat</span>
 				</button>
 			</div>

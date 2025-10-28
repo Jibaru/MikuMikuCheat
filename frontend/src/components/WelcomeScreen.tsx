@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import AudioWaveform from "./AudioWaveForm";
-import listenImg from "../assets/images/listen.png";
+import listenImg from "../assets/images/miku_cheat.png";
+import MangaLines from "./MangaLines";
+import PictureBackground from "./PictureBackground";
+import LightsBackground from "./LightsBackground";
 
 export default function WelcomeScreen() {
 	const { isRecording, audioLevel, processAudio } = useApp();
@@ -20,21 +23,20 @@ export default function WelcomeScreen() {
 
 	return (
 		<div className="app-container">
-			<div className="glass-window recording-view">
-				<div className="waveform-container">
+			<PictureBackground
+				imageUrl={listenImg}
+				className="absolute w-full h-full bg-[#1a1a2e] overflow-hidden animate-[shake_0.3s_ease-in-out_infinite]"
+			/>
+			<LightsBackground className="absolute w-full h-full z-0" />
+			<MangaLines className="absolute w-full h-full z-0" />
+			<section className="w-full h-full flex flex-col justify-end items-center relative z-10 pb-16">
+				<div className="w-full h-32">
 					<AudioWaveform isRecording={isRecording} level={audioLevel} />
 				</div>
-
-				<div className="recording-section">
-					<div className="miku-circle">
-						<img className="miku-img" src={listenImg} />
-					</div>
-				</div>
-
-				<button className="solve-button" onClick={processAudio}>
+				<button className="mb-4 primary-button" onClick={processAudio}>
 					<span>[⌘ + enter] MikuMikuCheat</span>
 				</button>
-			</div>
+			</section>
 		</div>
 	);
 }
