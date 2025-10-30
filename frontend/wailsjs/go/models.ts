@@ -27,6 +27,22 @@ export namespace services {
 			this.error = source["error"];
 		}
 	}
+	export class ScreenshotResponse {
+		imageBase64: string;
+		filepath: string;
+		error?: string;
+
+		static createFrom(source: any = {}) {
+			return new ScreenshotResponse(source);
+		}
+
+		constructor(source: any = {}) {
+			if ("string" === typeof source) source = JSON.parse(source);
+			this.imageBase64 = source["imageBase64"];
+			this.filepath = source["filepath"];
+			this.error = source["error"];
+		}
+	}
 	export class TranscribeAudioResponse {
 		transcription: string;
 		error?: string;

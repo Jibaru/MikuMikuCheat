@@ -6,6 +6,10 @@ export function GetAIResponse(arg1) {
 	return window["go"]["services"]["CheaterService"]["GetAIResponse"](arg1);
 }
 
+export function Screenshot() {
+	return window["go"]["services"]["CheaterService"]["Screenshot"]();
+}
+
 export function TranscribeAudio(arg1) {
 	return window["go"]["services"]["CheaterService"]["TranscribeAudio"](arg1);
 }

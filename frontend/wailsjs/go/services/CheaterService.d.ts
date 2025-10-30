@@ -4,6 +4,8 @@ import { services } from "../models";
 
 export function GetAIResponse(arg1: string): Promise<services.GetAIResponse>;
 
+export function Screenshot(): Promise<services.ScreenshotResponse>;
+
 export function TranscribeAudio(
 	arg1: services.AudioData,
 ): Promise<services.TranscribeAudioResponse>;

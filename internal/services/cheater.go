@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"image/png"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/kbinani/screenshot"
 )
 
 type CheaterService struct {
@@ -83,5 +86,43 @@ func (s *CheaterService) GetAIResponse(transcription string) GetAIResponse {
 	}
 	return GetAIResponse{
 		AIResponse: response,
+	}
+}
+
+type ScreenshotResponse struct {
+	ImageBase64 string `json:"imageBase64"`
+	Filepath    string `json:"filepath"`
+	Error       string `json:"error,omitempty"`
+}
+
+func (s *CheaterService) Screenshot() ScreenshotResponse {
+	screenZero := 0
+
+	bounds := screenshot.GetDisplayBounds(screenZero)
+
+	img, err := screenshot.CaptureRect(bounds)
+	if err != nil {
+		return ScreenshotResponse{
+			Error: fmt.Sprintf("Error capturing screenshot: %v", err),
+		}
+	}
+	fileName := fmt.Sprintf("%d_%dx%d.png", screenZero, bounds.Dx(), bounds.Dy())
+	file, _ := os.Create(fileName)
+	defer file.Close()
+	png.Encode(file, img)
+
+	imgBytes, err := os.ReadFile(fileName)
+	if err != nil {
+		return ScreenshotResponse{
+			Error: fmt.Sprintf("Error reading screenshot file: %v", err),
+		}
+	}
+
+	imgBase64 := base64.StdEncoding.EncodeToString(imgBytes)
+	absolutFilePath, _ := filepath.Abs(fileName)
+
+	return ScreenshotResponse{
+		ImageBase64: imgBase64,
+		Filepath:    absolutFilePath,
 	}
 }
