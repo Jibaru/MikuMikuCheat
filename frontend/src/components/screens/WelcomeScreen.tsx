@@ -5,6 +5,7 @@ import listenImg from "../../assets/images/miku_cheat.png";
 import MangaLines from "../ui/MangaLines";
 import PictureBackground from "../ui/PictureBackground";
 import LightsBackground from "../ui/LightsBackground";
+import RecordCap from "../ui/RecordCap";
 
 export default function WelcomeScreen() {
 	const { isRecording, audioLevel, processAudio } = useApp();
@@ -33,8 +34,12 @@ export default function WelcomeScreen() {
 				<div className="w-full h-32">
 					<AudioWaveform isRecording={isRecording} level={audioLevel} />
 				</div>
-				<button className="mb-4 primary-button" onClick={processAudio}>
-					<span>[⌘ + enter] MikuMikuCheat</span>
+				<button
+					className="mb-4 primary-button flex items-center gap-2"
+					onClick={processAudio}
+				>
+					<RecordCap />
+					<span>MikuMikuCheat</span>
 				</button>
 			</section>
 		</div>

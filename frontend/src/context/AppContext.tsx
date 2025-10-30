@@ -151,27 +151,37 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 	const addMessage = (msg: Message) => setMessages((prev) => [...prev, msg]);
 
 	const takeScreenshot = async () => {
-		const resp = await Screenshot();
-		if (resp.error) {
-			alert("Error taking screenshot: " + resp.error);
-			return;
-		}
+		setIsProcessing(true);
 
-		const r = await ProcessImage(resp.filepath);
-		if (resp.error) {
-			alert("Error processing screenshot: " + resp.error);
-			return;
-		}
+		try {
+			const resp = await Screenshot();
+			if (resp.error) {
+				alert("Error taking screenshot: " + resp.error);
+				return;
+			}
 
-		setMessages((prev) => [
-			...prev,
-			{
-				sender: "ai",
-				imageBase64: resp.imageBase64,
-				text: "Here's the screenshot I took:",
-			},
-			{ sender: "user", text: r.aiResponse },
-		]);
+			setMessages((prev) => [
+				...prev,
+				{
+					sender: "user",
+					imageBase64: resp.imageBase64,
+					text: "Screenshot",
+				},
+			]);
+
+			const r = await ProcessImage(resp.filepath);
+			if (resp.error) {
+				alert("Error processing screenshot: " + resp.error);
+				return;
+			}
+
+			setMessages((prev) => [...prev, { sender: "ai", text: r.aiResponse }]);
+		} catch (e: any) {
+			console.error(e);
+			alert("Error processing screenshot: " + e.message);
+		} finally {
+			setIsProcessing(false);
+		}
 	};
 
 	// Cleanup

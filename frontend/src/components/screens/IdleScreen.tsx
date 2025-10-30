@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import sleepImg from "../../assets/images/miku_sleep.png";
 import PictureBackground from "../ui/PictureBackground";
+import RecordCap from "../ui/RecordCap";
 
 export default function IdleScreen() {
 	const { setViewMode, startRecording, takeScreenshot } = useApp();
@@ -11,9 +12,10 @@ export default function IdleScreen() {
 		setViewMode("recording");
 	};
 
-	const handleScreentshot = async () => {
-		await Promise.all([takeScreenshot(), startRecording()]);
+	const handleScreenshot = async () => {
+		await startRecording();
 		setViewMode("chat");
+		await takeScreenshot();
 	};
 
 	useEffect(() => {
@@ -25,7 +27,7 @@ export default function IdleScreen() {
 
 			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "h") {
 				e.preventDefault();
-				await handleScreentshot();
+				await handleScreenshot();
 			}
 		};
 
@@ -39,9 +41,20 @@ export default function IdleScreen() {
 				imageUrl={sleepImg}
 				className="absolute w-full h-full bg-[#1a1a2e] overflow-hidden"
 			/>
-			<div className="w-full h-full flex flex-col justify-end items-center relative z-10">
-				<button className="primary-button" onClick={handleStart}>
-					<span>[⌘ + enter] Cheat</span>
+			<div className="w-full h-full flex flex-row justify-center gap-1 items-end relative z-10">
+				<button
+					className="primary-button flex items-center gap-2"
+					onClick={handleStart}
+				>
+					<RecordCap />
+					<span>Cheat</span>
+				</button>
+				<button
+					className="primary-button flex items-center gap-2"
+					onClick={handleStart}
+				>
+					<RecordCap secondCap={{ key: "h", label: "H" }} />
+					<span>Screenshot</span>
 				</button>
 			</div>
 		</div>

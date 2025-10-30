@@ -3,6 +3,7 @@ import { useApp } from "../../context/AppContext";
 import AudioWaveform from "../ui/AudioWaveForm";
 import thinkImg from "../../assets/images/miku_think.png";
 import ChatMessage from "../ui/ChatMessage";
+import RecordCap from "../ui/RecordCap";
 
 export default function ChatScreen() {
 	const {
@@ -94,12 +95,22 @@ export default function ChatScreen() {
 						<div className="mini-waveform-container">
 							<AudioWaveform isRecording={isRecording} level={audioLevel} />
 						</div>
-						<button
-							className="primary-button"
-							onClick={isRecording ? processAudio : startRecording}
-						>
-							<span>[⌘ + enter] {isRecording ? "cheat" : "resume listening"}</span>
-						</button>
+						<div className="flex flex-row justify-center gap-1">
+							<button
+								className="primary-button flex items-center gap-2"
+								onClick={processAudio}
+							>
+								<RecordCap />
+								<span>Audio</span>
+							</button>
+							<button
+								className="primary-button flex items-center gap-2"
+								onClick={takeScreenshot}
+							>
+								<RecordCap secondCap={{ key: "h", label: "H" }} />
+								<span>Screenshot</span>
+							</button>
+						</div>
 					</div>
 				)}
 			</div>
