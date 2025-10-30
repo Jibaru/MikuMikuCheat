@@ -15,6 +15,7 @@ import (
 
 	"MikuMikuCheat/internal/ai/groq"
 	"MikuMikuCheat/internal/ai/openai"
+	"MikuMikuCheat/internal/services"
 )
 
 //go:embed all:frontend/dist
@@ -31,7 +32,8 @@ func main() {
 	responsesClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 	transcriptionClient := groq.NewClient(os.Getenv("GROQ_API_KEY"))
 
-	app := NewApp(transcriptionClient, responsesClient)
+	app := NewApp()
+	cheaterService := services.NewCheaterService(transcriptionClient, responsesClient)
 
 	// Start system tray in a goroutine
 	go func() {
@@ -50,6 +52,7 @@ func main() {
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
+			cheaterService,
 		},
 		Frameless: true,
 		Mac: &mac.Options{

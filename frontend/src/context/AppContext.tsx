@@ -1,5 +1,8 @@
 import { createContext, useContext, useRef, useState, useEffect } from "react";
-import { TranscribeAudio, GetAIResponse } from "../../wailsjs/go/main/App";
+import {
+	TranscribeAudio,
+	GetAIResponse,
+} from "../../wailsjs/go/services/CheaterService";
 
 export type ViewMode = "idle" | "recording" | "chat";
 export interface Message {

@@ -2,12 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
-	"time"
 
 	"github.com/getlantern/systray"
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -19,19 +14,11 @@ type App struct {
 	mHide       *systray.MenuItem
 	mQuit       *systray.MenuItem
 	isMinimized bool
-
-	transcriptionClient TranscriptionClient
-	responsesClient     ResponsesClient
 }
 
-func NewApp(
-	transcriptionClient TranscriptionClient,
-	responsesClient ResponsesClient,
-) *App {
+func NewApp() *App {
 	return &App{
-		isMinimized:         false,
-		transcriptionClient: transcriptionClient,
-		responsesClient:     responsesClient,
+		isMinimized: false,
 	}
 }
 
@@ -132,82 +119,4 @@ func (a *App) SetOpacity(opacity int) {
 		alpha := uint8((opacity * 255) / 100)
 		setWindowOpacityWails(alpha)
 	}
-}
-
-type AudioData struct {
-	AudioBase64 string `json:"audioBase64"`
-	MimeType    string `json:"mimeType"`
-}
-
-type GetAIResponse struct {
-	AIResponse string `json:"aiResponse"`
-	Error      string `json:"error,omitempty"`
-}
-
-type TranscribeAudioResponse struct {
-	Transcription string `json:"transcription"`
-	Error         string `json:"error,omitempty"`
-}
-
-func (a *App) TranscribeAudio(audioData AudioData) TranscribeAudioResponse {
-	audioBytes, err := base64.StdEncoding.DecodeString(audioData.AudioBase64)
-	if err != nil {
-		return TranscribeAudioResponse{
-			Error: fmt.Sprintf("Error decoding audio: %v", err),
-		}
-	}
-
-	tempDir := os.TempDir()
-	audioPath := filepath.Join(tempDir, fmt.Sprintf("audio_%d.webm", time.Now().Unix()))
-
-	err = os.WriteFile(audioPath, audioBytes, 0644)
-	if err != nil {
-		return TranscribeAudioResponse{
-			Error: fmt.Sprintf("Error saving audio: %v", err),
-		}
-	}
-	defer os.Remove(audioPath)
-
-	ctx := context.Background()
-	transcription, err := a.transcriptionClient.TranscribeAudio(ctx, audioPath)
-	if err != nil {
-		return TranscribeAudioResponse{
-			Error: fmt.Sprintf("Error transcribing audio: %v", err),
-		}
-	}
-
-	return TranscribeAudioResponse{
-		Transcription: transcription,
-	}
-
-}
-
-func (a *App) GetAIResponse(transcription string) GetAIResponse {
-	ctx := context.Background()
-	prompt := fmt.Sprintf("You are a helpful coaching assistant. Your response is exact, short and concise. Provide insights based on the following user input: %s", transcription)
-	response, err := a.responsesClient.GenerateResponse(ctx, prompt)
-	if err != nil {
-		return GetAIResponse{
-			Error: fmt.Sprintf("Error generating AI response: %v", err),
-		}
-	}
-	return GetAIResponse{
-		AIResponse: response,
-	}
-}
-
-// CheckAPIKeys verifica si las claves API están configuradas
-func (a *App) CheckAPIKeys() map[string]bool {
-	return map[string]bool{
-		"openai":    os.Getenv("OPENAI_API_KEY") != "",
-		"anthropic": os.Getenv("ANTHROPIC_API_KEY") != "",
-	}
-}
-
-type TranscriptionClient interface {
-	TranscribeAudio(ctx context.Context, filePath string) (string, error)
-}
-
-type ResponsesClient interface {
-	GenerateResponse(ctx context.Context, prompt string) (string, error)
 }
