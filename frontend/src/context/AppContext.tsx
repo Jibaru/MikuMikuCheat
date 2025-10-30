@@ -2,6 +2,7 @@ import { createContext, useContext, useRef, useState, useEffect } from "react";
 import {
 	TranscribeAudio,
 	GetAIResponse,
+	Screenshot,
 } from "../../wailsjs/go/services/CheaterService";
 
 export type ViewMode = "idle" | "recording" | "chat";
@@ -20,6 +21,7 @@ interface AppContextProps {
 	startRecording: () => Promise<void>;
 	processAudio: () => Promise<void>;
 	addMessage: (msg: Message) => void;
+	takeScreenshot: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -136,6 +138,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
 	const addMessage = (msg: Message) => setMessages((prev) => [...prev, msg]);
 
+	const takeScreenshot = async () => {
+		const resp = await Screenshot();
+		if (resp.error) {
+			alert("Error taking screenshot: " + resp.error);
+			return;
+		}
+	};
+
 	// Cleanup
 	useEffect(() => {
 		return () => {
@@ -160,6 +170,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 				startRecording,
 				processAudio,
 				addMessage,
+				takeScreenshot,
 			}}
 		>
 			{children}

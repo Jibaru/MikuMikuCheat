@@ -4,7 +4,7 @@ import sleepImg from "../../assets/images/miku_sleep.png";
 import PictureBackground from "../ui/PictureBackground";
 
 export default function IdleScreen() {
-	const { setViewMode, startRecording } = useApp();
+	const { setViewMode, startRecording, takeScreenshot } = useApp();
 
 	const handleStart = async () => {
 		await startRecording();
@@ -16,6 +16,11 @@ export default function IdleScreen() {
 			if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
 				e.preventDefault();
 				await handleStart();
+			}
+
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "h") {
+				e.preventDefault();
+				await takeScreenshot();
 			}
 		};
 
