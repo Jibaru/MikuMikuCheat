@@ -3,12 +3,14 @@ import {
 	TranscribeAudio,
 	GetAIResponse,
 	Screenshot,
+	ProcessImage,
 } from "../../wailsjs/go/services/CheaterService";
 
 export type ViewMode = "idle" | "recording" | "chat";
 export interface Message {
 	sender: "user" | "ai";
 	text: string;
+	imageBase64?: string;
 }
 
 interface AppContextProps {
@@ -36,19 +38,23 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 	const streamRef = useRef<MediaStream | null>(null);
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 	const audioChunksRef = useRef<Blob[]>([]);
-	const lastProcessedIndex = useRef(0); // 👈 nuevo: marcador de procesamiento
+	const lastProcessedIndex = useRef(0);
 	const animationFrameRef = useRef<number>();
 
-	const startRecording = async () => {
+	const initDisplayMedia = async () => {
+		const stream = await navigator.mediaDevices.getDisplayMedia({
+			audio: true,
+		});
+		streamRef.current = stream;
+	};
+
+	const beginRecording = async () => {
 		if (isRecording) return;
 		if (!streamRef.current) {
-			const stream = await navigator.mediaDevices.getDisplayMedia({
-				audio: true,
-			});
-			streamRef.current = stream;
+			await initDisplayMedia();
 		}
 
-		const mediaRecorder = new MediaRecorder(streamRef.current);
+		const mediaRecorder = new MediaRecorder(streamRef.current!);
 		audioChunksRef.current = [];
 		mediaRecorderRef.current = mediaRecorder;
 
@@ -58,11 +64,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
 		mediaRecorder.start(100);
 		setIsRecording(true);
+	};
 
-		// audio level
+	const startAudio = async () => {
 		const audioContext = new AudioContext();
 		const analyser = audioContext.createAnalyser();
-		const source = audioContext.createMediaStreamSource(streamRef.current);
+		const source = audioContext.createMediaStreamSource(streamRef.current!);
 		source.connect(analyser);
 		analyser.fftSize = 256;
 		const dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -74,7 +81,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 			animationFrameRef.current = requestAnimationFrame(updateLevel);
 		};
 		updateLevel();
+	};
 
+	const startRecording = async () => {
+		if (isRecording) return;
+		await beginRecording();
+		await startAudio();
 		console.log("🎙 Grabación iniciada permanentemente.");
 	};
 
@@ -144,6 +156,22 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 			alert("Error taking screenshot: " + resp.error);
 			return;
 		}
+
+		const r = await ProcessImage(resp.filepath);
+		if (resp.error) {
+			alert("Error processing screenshot: " + resp.error);
+			return;
+		}
+
+		setMessages((prev) => [
+			...prev,
+			{
+				sender: "ai",
+				imageBase64: resp.imageBase64,
+				text: "Here's the screenshot I took:",
+			},
+			{ sender: "user", text: r.aiResponse },
+		]);
 	};
 
 	// Cleanup

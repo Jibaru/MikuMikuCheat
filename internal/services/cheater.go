@@ -15,15 +15,18 @@ import (
 type CheaterService struct {
 	transcriptionClient TranscriptionClient
 	responsesClient     ResponsesClient
+	imageClient         ImageClient
 }
 
 func NewCheaterService(
 	transcriptionClient TranscriptionClient,
 	responsesClient ResponsesClient,
+	imageClient ImageClient,
 ) *CheaterService {
 	return &CheaterService{
 		transcriptionClient: transcriptionClient,
 		responsesClient:     responsesClient,
+		imageClient:         imageClient,
 	}
 }
 
@@ -106,7 +109,7 @@ func (s *CheaterService) Screenshot() ScreenshotResponse {
 			Error: fmt.Sprintf("Error capturing screenshot: %v", err),
 		}
 	}
-	fileName := fmt.Sprintf("%d_%dx%d.png", screenZero, bounds.Dx(), bounds.Dy())
+	fileName := fmt.Sprintf("%d_%dx%d_%d.png", screenZero, bounds.Dx(), bounds.Dy(), time.Now().Unix())
 	file, _ := os.Create(fileName)
 	defer file.Close()
 	png.Encode(file, img)
@@ -124,5 +127,18 @@ func (s *CheaterService) Screenshot() ScreenshotResponse {
 	return ScreenshotResponse{
 		ImageBase64: imgBase64,
 		Filepath:    absolutFilePath,
+	}
+}
+
+func (s *CheaterService) ProcessImage(filepath string) GetAIResponse {
+	ctx := context.Background()
+	response, err := s.imageClient.ProcessImage(ctx, filepath)
+	if err != nil {
+		return GetAIResponse{
+			Error: fmt.Sprintf("Error processing image: %v", err),
+		}
+	}
+	return GetAIResponse{
+		AIResponse: response,
 	}
 }

@@ -11,6 +11,11 @@ export default function IdleScreen() {
 		setViewMode("recording");
 	};
 
+	const handleScreentshot = async () => {
+		await Promise.all([takeScreenshot(), startRecording()]);
+		setViewMode("chat");
+	};
+
 	useEffect(() => {
 		const handleKeyPress = async (e: KeyboardEvent) => {
 			if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -20,7 +25,7 @@ export default function IdleScreen() {
 
 			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "h") {
 				e.preventDefault();
-				await takeScreenshot();
+				await handleScreentshot();
 			}
 		};
 

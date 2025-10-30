@@ -33,7 +33,7 @@ func main() {
 	transcriptionClient := groq.NewClient(os.Getenv("GROQ_API_KEY"))
 
 	app := NewApp()
-	cheaterService := services.NewCheaterService(transcriptionClient, responsesClient)
+	cheaterService := services.NewCheaterService(transcriptionClient, responsesClient, responsesClient)
 
 	// Start system tray in a goroutine
 	go func() {
