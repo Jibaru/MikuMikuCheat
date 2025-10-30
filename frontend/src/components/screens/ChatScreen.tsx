@@ -12,11 +12,11 @@ export default function ChatScreen() {
 		audioLevel,
 		processAudio,
 		startRecording,
+		takeScreenshot,
 	} = useApp();
 
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	// 🎧 Keyboard shortcuts for recording and processing
 	useEffect(() => {
 		const handleKeyPress = async (e: KeyboardEvent) => {
 			if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -27,6 +27,11 @@ export default function ChatScreen() {
 				} else {
 					await startRecording();
 				}
+			}
+
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "h") {
+				e.preventDefault();
+				await takeScreenshot();
 			}
 		};
 
