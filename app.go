@@ -20,13 +20,18 @@ type App struct {
 	mQuit       *systray.MenuItem
 	isMinimized bool
 
-	aiModel AIModel
+	transcriptionClient TranscriptionClient
+	responsesClient     ResponsesClient
 }
 
-func NewApp(aiModel AIModel) *App {
+func NewApp(
+	transcriptionClient TranscriptionClient,
+	responsesClient ResponsesClient,
+) *App {
 	return &App{
-		isMinimized: false,
-		aiModel:     aiModel,
+		isMinimized:         false,
+		transcriptionClient: transcriptionClient,
+		responsesClient:     responsesClient,
 	}
 }
 
@@ -164,7 +169,7 @@ func (a *App) TranscribeAudio(audioData AudioData) TranscribeAudioResponse {
 	defer os.Remove(audioPath)
 
 	ctx := context.Background()
-	transcription, err := a.aiModel.TranscribeAudio(ctx, audioPath)
+	transcription, err := a.transcriptionClient.TranscribeAudio(ctx, audioPath)
 	if err != nil {
 		return TranscribeAudioResponse{
 			Error: fmt.Sprintf("Error transcribing audio: %v", err),
@@ -180,7 +185,7 @@ func (a *App) TranscribeAudio(audioData AudioData) TranscribeAudioResponse {
 func (a *App) GetAIResponse(transcription string) GetAIResponse {
 	ctx := context.Background()
 	prompt := fmt.Sprintf("You are a helpful coaching assistant. Your response is exact, short and concise. Provide insights based on the following user input: %s", transcription)
-	response, err := a.aiModel.GenerateResponse(ctx, prompt)
+	response, err := a.responsesClient.GenerateResponse(ctx, prompt)
 	if err != nil {
 		return GetAIResponse{
 			Error: fmt.Sprintf("Error generating AI response: %v", err),
@@ -199,7 +204,10 @@ func (a *App) CheckAPIKeys() map[string]bool {
 	}
 }
 
-type AIModel interface {
-	GenerateResponse(ctx context.Context, prompt string) (string, error)
+type TranscriptionClient interface {
 	TranscribeAudio(ctx context.Context, filePath string) (string, error)
+}
+
+type ResponsesClient interface {
+	GenerateResponse(ctx context.Context, prompt string) (string, error)
 }

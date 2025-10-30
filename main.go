@@ -1,7 +1,6 @@
 package main
 
 import (
-	"MikuMikuCheat/internal/models"
 	"embed"
 	"log"
 	"os"
@@ -13,6 +12,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+
+	"MikuMikuCheat/internal/ai/groq"
+	"MikuMikuCheat/internal/ai/openai"
 )
 
 //go:embed all:frontend/dist
@@ -26,9 +28,10 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	aiModel := models.NewOpenAIModel(os.Getenv("OPENAI_API_KEY"))
+	responsesClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
+	transcriptionClient := groq.NewClient(os.Getenv("GROQ_API_KEY"))
 
-	app := NewApp(aiModel)
+	app := NewApp(transcriptionClient, responsesClient)
 
 	// Start system tray in a goroutine
 	go func() {
