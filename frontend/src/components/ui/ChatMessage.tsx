@@ -63,8 +63,14 @@ export default function ChatMessage({
 
 	return (
 		<div className={`message-box ${isAI ? "response-box" : "transcription-box"}`}>
-			<div className="box-label">{isAI ? "AI Response:" : "You said:"}</div>
-			<div className="box-content prose prose-invert max-w-none">
+			<div className={`${isAI ? "flex flex-row-reverse" : "flex flex-row"}`}>
+				<div className={`box-label ${isAI ? "box-label-ai" : "box-label-user"}`}>
+					{isAI ? "Miku" : "You"}
+				</div>
+			</div>
+			<div
+				className={`box-content prose prose-invert max-w-none ${isAI ? "box-content-ai" : "box-content-user"}`}
+			>
 				{imageBase64 ? (
 					<img
 						src={`data:image/png;base64,${imageBase64}`}
