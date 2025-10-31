@@ -1,9 +1,20 @@
-import { useEffect, useRef } from "react";
-import { useApp } from "../../context/AppContext";
+import { memo, useEffect, useRef } from "react";
+import { Message, useApp } from "../../context/AppContext";
 import AudioWaveform from "../ui/AudioWaveForm";
 import thinkImg from "../../assets/images/miku_think.png";
 import ChatMessage from "../ui/ChatMessage";
 import RecordCap from "../ui/RecordCap";
+
+const MessageWrapper = memo(
+	({ message }: { message: Message }) => (
+		<ChatMessage
+			sender={message.sender}
+			text={message.text}
+			imageBase64={message.imageBase64}
+		/>
+	),
+	(prevProps, nextProps) => prevProps.message.id === nextProps.message.id,
+);
 
 export default function ChatScreen() {
 	const {
@@ -40,7 +51,6 @@ export default function ChatScreen() {
 		return () => window.removeEventListener("keydown", handleKeyPress);
 	}, [isRecording, processAudio, startRecording]);
 
-	// ⬇️ Auto scroll to bottom when new messages arrive
 	useEffect(() => {
 		if (messagesEndRef.current) {
 			messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -52,14 +62,10 @@ export default function ChatScreen() {
 			<div className="glass-window-chat chat-view">
 				<div className="messages-container">
 					{messages.map((m, i) => (
-						<ChatMessage
-							key={i}
-							sender={m.sender}
-							text={m.text}
-							imageBase64={m.imageBase64}
-						/>
+						<div key={i} className="animate-fadeIn">
+							<MessageWrapper key={m.id} message={m} />
+						</div>
 					))}
-					{/* Invisible div to auto-scroll into view */}
 					<div ref={messagesEndRef} />
 				</div>
 
@@ -84,6 +90,21 @@ export default function ChatScreen() {
 									0% { background-position: 0% 50%; }
 									50% { background-position: 100% 50%; }
 									100% { background-position: 0% 50%; }
+								}
+
+								@keyframes fadeIn {
+									from {
+										opacity: 0;
+										transform: translateY(10px);
+									}
+									to {
+										opacity: 1;
+										transform: translateY(0);
+									}
+								}
+
+								.animate-fadeIn {
+									animation: fadeIn 0.5s ease-out;
 								}
 							`}</style>
 						</div>

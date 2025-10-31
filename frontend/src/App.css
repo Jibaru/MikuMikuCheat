@@ -265,7 +265,7 @@ body {
 
 /* Match scroll style of chat with rest of the theme */
 .chat-view::-webkit-scrollbar {
-	width: 8px;
+	width: 9px;
 }
 
 .chat-view::-webkit-scrollbar-thumb {

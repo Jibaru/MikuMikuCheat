@@ -8,6 +8,7 @@ import {
 
 export type ViewMode = "idle" | "recording" | "chat";
 export interface Message {
+	id: number;
 	sender: "user" | "ai";
 	text: string;
 	imageBase64?: string;
@@ -40,6 +41,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 	const audioChunksRef = useRef<Blob[]>([]);
 	const lastProcessedIndex = useRef(0);
 	const animationFrameRef = useRef<number>();
+
+	const nextMessageId = () => {
+		return messages.length > 0 ? messages[messages.length - 1].id + 1 : 1;
+	};
 
 	const initDisplayMedia = async () => {
 		const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -130,13 +135,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
 				setMessages((prev) => [
 					...prev,
-					{ sender: "user", text: res.transcription },
+					{ id: nextMessageId(), sender: "user", text: res.transcription },
 				]);
 
 				const aiRes = await GetAIResponse(res.transcription);
 				if (aiRes.error) throw new Error(aiRes.error);
 
-				setMessages((prev) => [...prev, { sender: "ai", text: aiRes.aiResponse }]);
+				setMessages((prev) => [
+					...prev,
+					{ id: nextMessageId(), sender: "ai", text: aiRes.aiResponse },
+				]);
 			} catch (e: any) {
 				console.error(e);
 				alert("Error processing audio: " + e.message);
@@ -163,6 +171,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 			setMessages((prev) => [
 				...prev,
 				{
+					id: nextMessageId(),
 					sender: "user",
 					imageBase64: resp.imageBase64,
 					text: "Screenshot",
@@ -175,7 +184,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 				return;
 			}
 
-			setMessages((prev) => [...prev, { sender: "ai", text: r.aiResponse }]);
+			setMessages((prev) => [
+				...prev,
+				{ id: nextMessageId(), sender: "ai", text: r.aiResponse },
+			]);
 		} catch (e: any) {
 			console.error(e);
 			alert("Error processing screenshot: " + e.message);
