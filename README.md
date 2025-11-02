@@ -1,12 +1,20 @@
 <div align="center">
-    <img src="./banner.png"/>
+    <img src="./screenshots/00.png"/>
     <h1 style="font-family: 'Yu Gothic'">MikuMikuCheat</h1>
     <p style="font-style: italic">Cheat your interviews with Miku's help.</p>
 </div>
 
 ## What is this?
 
-A discreet, real-time interview assistant that runs as a semi-transparent overlay on your desktop. It captures your screen's audio, transcribes it, and provides you with concise, AI-powered answers to keep you one step ahead.
+A real-time interview assistant that's invisible on calls. It captures your screen audio, transcribes it, and provides concise, AI-powered answers to keep you one step ahead.
+
+- Audio assistant
+- Screenshot troubleshooter
+- Not visible on live calls
+
+
+[![Demo](screenshots/yt.png)](https://www.youtube.com/watch?v=3-MetMz-af0)
+
 
 ## Getting Started
 
@@ -38,3 +46,12 @@ This will create a distributable binary in the `build/bin` directory.
 
 - **Backend:** Go, Wails
 - **Frontend:** React, TypeScript, Vite
+
+## Roadmap
+
+- [x] Available on Windows
+- [x] Support for audio conversations
+- [x] Support for screenshots
+- [ ] Available on Linux
+- [ ] Available on MacOS
+- [ ] Support for personal context
