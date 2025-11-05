@@ -1,0 +1,19 @@
+{
+    "ai": {
+        "transcribe": {
+            "provider": "groq",
+            "model":"whisper-large-v3-turbo",
+            "apiKey": "your-api-key-here"
+        },
+        "generate": {
+            "provider": "openai",
+            "model": "gpt-4o",
+            "apiKey": "your-api-key-here"
+        },
+        "image": {
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+            "apiKey": "your-api-key-here"
+        }
+    }
+}

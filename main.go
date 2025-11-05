@@ -3,10 +3,8 @@ package main
 import (
 	"embed"
 	"log"
-	"os"
 
 	"github.com/getlantern/systray"
-	"github.com/joho/godotenv"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -15,6 +13,7 @@ import (
 
 	"MikuMikuCheat/internal/ai/groq"
 	"MikuMikuCheat/internal/ai/openai"
+	"MikuMikuCheat/internal/config"
 	"MikuMikuCheat/internal/services"
 )
 
@@ -25,22 +24,43 @@ var assets embed.FS
 var icon []byte
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+	cfg, err := config.LoadConfig("config.json")
+	if err != nil {
+		log.Fatal("Error loading config:", err)
 	}
 
-	responsesClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
-	transcriptionClient := groq.NewClient(os.Getenv("GROQ_API_KEY"))
+	var (
+		transcriptionClient services.TranscriptionClient
+		responsesClient     services.ResponsesClient
+		imageClient         services.ImageClient
+	)
+
+	switch cfg.AI.Transcribe.Provider {
+	case "groq":
+		transcriptionClient = groq.NewClient(cfg.AI.Transcribe.ApiKey, cfg.AI.Transcribe.Model)
+	case "openai":
+		transcriptionClient = openai.NewClient(cfg.AI.Transcribe.ApiKey, "", cfg.AI.Transcribe.Model, "")
+	}
+
+	switch cfg.AI.Generate.Provider {
+	case "openai":
+		responsesClient = openai.NewClient(cfg.AI.Generate.ApiKey, cfg.AI.Generate.Model, "", "")
+	}
+
+	switch cfg.AI.Image.Provider {
+	case "openai":
+		imageClient = openai.NewClient(cfg.AI.Image.ApiKey, "", "", cfg.AI.Image.Model)
+	}
 
 	app := NewApp()
-	cheaterService := services.NewCheaterService(transcriptionClient, responsesClient, responsesClient)
+	cheaterService := services.NewCheaterService(transcriptionClient, responsesClient, imageClient)
 
 	// Start system tray in a goroutine
 	go func() {
 		systray.Run(app.onSystrayReady, app.onSystrayExit)
 	}()
 
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:  "MikuMikuCheat",
 		Width:  500,
 		Height: 600,

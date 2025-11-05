@@ -16,10 +16,11 @@ const groqAPIURL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 type Client struct {
 	apiKey string
+	model  string
 }
 
-func NewClient(apiKey string) *Client {
-	return &Client{apiKey: apiKey}
+func NewClient(apiKey string, model string) *Client {
+	return &Client{apiKey: apiKey, model: model}
 }
 
 func (c *Client) TranscribeAudio(ctx context.Context, filePath string) (string, error) {
@@ -47,7 +48,7 @@ func (c *Client) TranscribeAudio(ctx context.Context, filePath string) (string, 
 	}
 
 	// Add other form fields
-	writer.WriteField("model", "whisper-large-v3-turbo")
+	writer.WriteField("model", c.model)
 	writer.WriteField("temperature", "0")
 	writer.WriteField("response_format", "json")
 	writer.WriteField("language", "es")

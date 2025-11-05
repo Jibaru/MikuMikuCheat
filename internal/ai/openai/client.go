@@ -12,12 +12,25 @@ import (
 )
 
 type Client struct {
-	client *openai.Client
+	client          *openai.Client
+	responseModel   string
+	transcribeModel string
+	imageModel      string
 }
 
-func NewClient(apiKey string) *Client {
+func NewClient(
+	apiKey string,
+	responseModel string,
+	transcribeModel string,
+	imageModel string,
+) *Client {
 	client := openai.NewClient(apiKey)
-	return &Client{client: client}
+	return &Client{
+		client:          client,
+		responseModel:   responseModel,
+		transcribeModel: transcribeModel,
+		imageModel:      imageModel,
+	}
 }
 
 func (m *Client) GenerateResponse(ctx context.Context, prompt string) (string, error) {
