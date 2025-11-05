@@ -10,7 +10,8 @@ import (
 
 // Config is the top-level structure, matching the root of the JSON.
 type Config struct {
-	AI AIConfig `json:"ai" validate:"required"`
+	AI      AIConfig      `json:"ai" validate:"required"`
+	Context ContextConfig `json:"context" validate:"required"`
 }
 
 // AIConfig holds the nested "transcribe" and "generate" objects.
@@ -18,6 +19,11 @@ type AIConfig struct {
 	Transcribe ServiceConfig `json:"transcribe" validate:"required"`
 	Generate   ServiceConfig `json:"generate" validate:"required"`
 	Image      ServiceConfig `json:"image" validate:"required"`
+}
+
+// ContextConfig holds information about personal context.
+type ContextConfig struct {
+	Path string `json:"path"`
 }
 
 // ServiceConfig defines the common structure for a service,

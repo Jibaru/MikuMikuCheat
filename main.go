@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
 
 	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2"
@@ -29,6 +30,15 @@ func main() {
 		log.Fatal("Error loading config:", err)
 	}
 
+	var additionalContext string
+	if cfg.Context.Path != "" {
+		content, err := os.ReadFile(cfg.Context.Path)
+		if err != nil {
+			log.Fatal("Error reading context file:", err)
+		}
+		additionalContext = string(content)
+	}
+
 	var (
 		transcriptionClient services.TranscriptionClient
 		responsesClient     services.ResponsesClient
@@ -39,17 +49,17 @@ func main() {
 	case "groq":
 		transcriptionClient = groq.NewClient(cfg.AI.Transcribe.ApiKey, cfg.AI.Transcribe.Model)
 	case "openai":
-		transcriptionClient = openai.NewClient(cfg.AI.Transcribe.ApiKey, "", cfg.AI.Transcribe.Model, "")
+		transcriptionClient = openai.NewClient(cfg.AI.Transcribe.ApiKey, "", cfg.AI.Transcribe.Model, "", additionalContext)
 	}
 
 	switch cfg.AI.Generate.Provider {
 	case "openai":
-		responsesClient = openai.NewClient(cfg.AI.Generate.ApiKey, cfg.AI.Generate.Model, "", "")
+		responsesClient = openai.NewClient(cfg.AI.Generate.ApiKey, cfg.AI.Generate.Model, "", "", additionalContext)
 	}
 
 	switch cfg.AI.Image.Provider {
 	case "openai":
-		imageClient = openai.NewClient(cfg.AI.Image.ApiKey, "", "", cfg.AI.Image.Model)
+		imageClient = openai.NewClient(cfg.AI.Image.ApiKey, "", "", cfg.AI.Image.Model, additionalContext)
 	}
 
 	app := NewApp()

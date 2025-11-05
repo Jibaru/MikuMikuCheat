@@ -15,5 +15,8 @@
             "model": "gpt-4o-mini",
             "apiKey": "your-api-key-here"
         }
+    },
+    "context": {
+        "path": "context.md"
     }
 }

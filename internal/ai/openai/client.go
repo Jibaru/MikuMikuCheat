@@ -12,10 +12,11 @@ import (
 )
 
 type Client struct {
-	client          *openai.Client
-	responseModel   string
-	transcribeModel string
-	imageModel      string
+	client            *openai.Client
+	responseModel     string
+	transcribeModel   string
+	imageModel        string
+	additionalContext string
 }
 
 func NewClient(
@@ -23,25 +24,40 @@ func NewClient(
 	responseModel string,
 	transcribeModel string,
 	imageModel string,
+	additionalContext string,
 ) *Client {
 	client := openai.NewClient(apiKey)
 	return &Client{
-		client:          client,
-		responseModel:   responseModel,
-		transcribeModel: transcribeModel,
-		imageModel:      imageModel,
+		client:            client,
+		responseModel:     responseModel,
+		transcribeModel:   transcribeModel,
+		imageModel:        imageModel,
+		additionalContext: additionalContext,
 	}
 }
 
+func (m *Client) newMessages() []openai.ChatCompletionMessage {
+	messages := []openai.ChatCompletionMessage{}
+
+	if m.additionalContext != "" {
+		messages = append(messages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: m.additionalContext,
+		})
+	}
+
+	return messages
+}
+
 func (m *Client) GenerateResponse(ctx context.Context, prompt string) (string, error) {
+	messages := append(m.newMessages(), openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: prompt,
+	})
+
 	resp, err := m.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: prompt,
-			},
-		},
+		Model:    m.responseModel,
+		Messages: messages,
 	})
 	if err != nil {
 		return "", fmt.Errorf("error generating response: %w", err)
@@ -60,7 +76,7 @@ func (m *Client) TranscribeAudio(ctx context.Context, filePath string) (string, 
 	defer file.Close()
 
 	resp, err := m.client.CreateTranscription(ctx, openai.AudioRequest{
-		Model:    "gpt-4o-mini-transcribe",
+		Model:    m.transcribeModel,
 		FilePath: filePath,
 	})
 	if err != nil {
@@ -94,26 +110,25 @@ func (m *Client) ProcessImage(ctx context.Context, filePath string) (string, err
 	base64Data := base64.StdEncoding.EncodeToString(data)
 	imageData := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
 
-	// Send image to GPT-4o-mini
-	resp, err := m.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini", // supports vision
-		Messages: []openai.ChatCompletionMessage{
+	messages := append(m.newMessages(), openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleUser,
+		MultiContent: []openai.ChatMessagePart{
 			{
-				Role: openai.ChatMessageRoleUser,
-				MultiContent: []openai.ChatMessagePart{
-					{
-						Type: openai.ChatMessagePartTypeText,
-						Text: "Analyze this image. It contains a problem or question (maybe code-related). Please provide a clear and correct solution or answer.",
-					},
-					{
-						Type: openai.ChatMessagePartTypeImageURL,
-						ImageURL: &openai.ChatMessageImageURL{
-							URL: imageData,
-						},
-					},
+				Type: openai.ChatMessagePartTypeText,
+				Text: "Analyze this image. It contains a problem or question (maybe code-related). Please provide a clear and correct solution or answer.",
+			},
+			{
+				Type: openai.ChatMessagePartTypeImageURL,
+				ImageURL: &openai.ChatMessageImageURL{
+					URL: imageData,
 				},
 			},
 		},
+	})
+
+	resp, err := m.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+		Model:    m.imageModel,
+		Messages: messages,
 	})
 	if err != nil {
 		return "", fmt.Errorf("error processing image: %w", err)

@@ -54,4 +54,4 @@ This will create a distributable binary in the `build/bin` directory.
 - [x] Support for screenshots
 - [ ] Available on Linux
 - [ ] Available on MacOS
-- [ ] Support for personal context
+- [x] Support for personal context
