@@ -26,7 +26,7 @@ A real-time interview assistant that's invisible on calls. It captures your scre
 ### Installation
 
 1.  Clone the repository
-2.  Create a `.env` file
+2.  Create a `config.json` file based on `config.json.example`
 3.  Run the application:
     ```bash
     wails dev
